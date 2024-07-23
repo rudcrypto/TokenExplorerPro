@@ -1,0 +1,85 @@
+import requests
+import pandas as pd
+import matplotlib.pyplot as plt
+
+class TokenExplorerPro:
+    def __init__(self, api_url: str):
+        self.api_url = api_url
+
+    def fetch_token_info(self, token_address: str):
+        """
+        Fetch information about a specific token using its address.
+        """
+        response = requests.get(f"{self.api_url}/token/{token_address}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to fetch data: {response.status_code}")
+
+    def fetch_token_balance(self, token_address: str, wallet_address: str):
+        """
+        Fetch token balance for a specific wallet address.
+        """
+        response = requests.get(f"{self.api_url}/token/{token_address}/balance/{wallet_address}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to fetch data: {response.status_code}")
+
+    def fetch_token_transactions(self, token_address: str):
+        """
+        Fetch recent transactions for a specific token.
+        """
+        response = requests.get(f"{self.api_url}/token/{token_address}/transactions")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to fetch data: {response.status_code}")
+
+    def analyze_token_data(self, token_info, token_balance, token_transactions):
+        """
+        Analyze token data and extract relevant metrics.
+        """
+        metrics = {
+            'token_name': token_info.get('name'),
+            'token_symbol': token_info.get('symbol'),
+            'total_supply': token_info.get('total_supply'),
+            'wallet_balance': token_balance.get('balance'),
+            'transaction_count': len(token_transactions.get('transactions', []))
+        }
+        return metrics
+
+    def visualize_metrics(self, metrics_list):
+        """
+        Visualize the token metrics as a bar chart.
+        """
+        df = pd.DataFrame(metrics_list)
+        df.plot(x='token_name', y=['total_supply', 'wallet_balance', 'transaction_count'], kind='bar')
+        plt.xlabel('Token Name')
+        plt.ylabel('Metrics')
+        plt.title('Token Metrics')
+        plt.legend(['Total Supply', 'Wallet Balance', 'Transaction Count'])
+        plt.grid(True)
+        plt.show()
+
+# Example usage
+if __name__ == "__main__":
+    api_url = 'https://token-api.example.com'
+    token_explorer = TokenExplorerPro(api_url)
+
+    # Example token address and wallet address
+    token_address = '0x1234567890abcdef1234567890abcdef12345678'
+    wallet_address = '0xabcdef1234567890abcdef1234567890abcdef12'
+
+    try:
+        token_info = token_explorer.fetch_token_info(token_address)
+        token_balance = token_explorer.fetch_token_balance(token_address, wallet_address)
+        token_transactions = token_explorer.fetch_token_transactions(token_address)
+        
+        metrics = token_explorer.analyze_token_data(token_info, token_balance, token_transactions)
+        metrics_list = [metrics]
+
+        # Visualize the collected metrics
+        token_explorer.visualize_metrics(metrics_list)
+    except Exception as e:
+        print(e)
